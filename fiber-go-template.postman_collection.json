@@ -1,0 +1,316 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-5678-90ef-ghij-klmnopqrstuv",
+    "name": "Fiber Go Template API",
+    "description": "Postman collection for the Fiber Go Template REST API (MongoDB-backed). Covers authentication (JWT) and book CRUD endpoints.\n\nPre-request setup:\n1. Set the `baseUrl` collection variable (default: http://localhost:5000/api/v1).\n2. Call the `Sign Up` request to register a user.\n3. Call the `Sign In` request — the response `tokens.access` and `tokens.refresh` are automatically saved to the `accessToken` and `refreshToken` collection variables.\n4. All private (JWT-protected) requests use the `accessToken` via a Bearer token auth header.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bookId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Get All Books",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/books",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"]
+            },
+            "description": "Returns the list of all books stored in MongoDB.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Book by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/book/{{bookId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["book", "{{bookId}}"],
+              "variable": [
+                {
+                  "key": "bookId",
+                  "value": "{{bookId}}",
+                  "description": "UUID of the book (set from a successful Create Book response)."
+                }
+              ]
+            },
+            "description": "Fetch a single book by its UUID.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\",\n    \"user_role\": \"admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/sign/up",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "sign", "up"]
+            },
+            "description": "Register a new user. Valid roles: `admin`, `moderator`, `user`.\n\n- admin: book create/update/delete\n- moderator: book create/update\n- user: book create only",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sign In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.tokens) {",
+                  "  pm.collectionVariables.set('accessToken', json.tokens.access);",
+                  "  pm.collectionVariables.set('refreshToken', json.tokens.refresh);",
+                  "  console.log('Tokens saved to collection variables.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/sign/in",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "sign", "in"]
+            },
+            "description": "Authenticate a user and receive `tokens.access` and `tokens.refresh`. On success, the tokens are automatically saved to the `accessToken` and `refreshToken` collection variables.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Private (JWT)",
+      "item": [
+        {
+          "name": "Create Book",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.book && json.book.id) {",
+                  "  pm.collectionVariables.set('bookId', json.book.id);",
+                  "  console.log('bookId saved:', json.book.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"The Pragmatic Programmer\",\n    \"author\": \"Andrew Hunt\",\n    \"book_attrs\": {\n        \"picture\": \"https://example.com/cover.jpg\",\n        \"description\": \"A classic guide to software craftsmanship.\",\n        \"rating\": 9\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/book",
+              "host": ["{{baseUrl}}"],
+              "path": ["book"]
+            },
+            "description": "Create a new book. Requires a valid access token. `user_id`, `id`, `created_at`, and `book_status` are set by the server. On success, the new book's `id` is saved to the `bookId` variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Book",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": \"{{bookId}}\",\n    \"title\": \"The Pragmatic Programmer (Updated)\",\n    \"author\": \"Andrew Hunt & David Thomas\",\n    \"book_status\": 1,\n    \"book_attrs\": {\n        \"picture\": \"https://example.com/cover-2.jpg\",\n        \"description\": \"Updated edition.\",\n        \"rating\": 10\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/book",
+              "host": ["{{baseUrl}}"],
+              "path": ["book"]
+            },
+            "description": "Update an existing book. The `id` in the body must match an existing book, and the token owner must be the book's creator. Requires `book:update` credential."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Book",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": \"{{bookId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/book",
+              "host": ["{{baseUrl}}"],
+              "path": ["book"]
+            },
+            "description": "Delete a book by ID (sent in the request body). The token owner must be the book's creator. Requires `book:delete` credential."
+          },
+          "response": []
+        },
+        {
+          "name": "Sign Out",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/sign/out",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "sign", "out"]
+            },
+            "description": "Sign out the current user by deleting their refresh token from Redis. No request body required."
+          },
+          "response": []
+        },
+        {
+          "name": "Renew Tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/token/renew",
+              "host": ["{{baseUrl}}"],
+              "path": ["token", "renew"]
+            },
+            "description": "Exchange a valid refresh token for a new access/refresh pair. The access token is sent in the Authorization header."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

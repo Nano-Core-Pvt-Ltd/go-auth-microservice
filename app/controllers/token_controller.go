@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/create-go-app/fiber-go-template/app/models"
@@ -10,6 +11,7 @@ import (
 	"github.com/create-go-app/fiber-go-template/platform/database"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 )
 
 // RenewTokens method for renew access and refresh tokens.
@@ -75,6 +77,42 @@ func RenewTokens(c *fiber.Ctx) error {
 		// Define user ID.
 		userID := claims.UserID
 
+		// Create a new Redis connection.
+		connRedis, err := cache.RedisConnection()
+		if err != nil {
+			// Return status 500 and Redis connection error.
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg":   err.Error(),
+			})
+		}
+
+		// Fetch the refresh token stored in Redis for this user.
+		storedRefresh, err := connRedis.Get(context.Background(), userID.String()).Result()
+		if err != nil {
+			// If the key is missing, the user signed out (or never signed in).
+			if errors.Is(err, redis.Nil) {
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+					"error": true,
+					"msg":   "unauthorized, your session was ended",
+				})
+			}
+			// Any other Redis error is a server error.
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg":   err.Error(),
+			})
+		}
+
+		// The submitted refresh token must match the one stored in Redis.
+		// A mismatch means the token is stale (already rotated) or stolen.
+		if storedRefresh != renew.RefreshToken {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": true,
+				"msg":   "unauthorized, invalid refresh token",
+			})
+		}
+
 		// Create database connection.
 		db, err := database.OpenDBConnection()
 		if err != nil {
@@ -115,17 +153,7 @@ func RenewTokens(c *fiber.Ctx) error {
 			})
 		}
 
-		// Create a new Redis connection.
-		connRedis, err := cache.RedisConnection()
-		if err != nil {
-			// Return status 500 and Redis connection error.
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": true,
-				"msg":   err.Error(),
-			})
-		}
-
-		// Save refresh token to Redis.
+		// Rotate the refresh token: overwrite the stored value with the new one.
 		errRedis := connRedis.Set(context.Background(), userID.String(), tokens.Refresh, 0).Err()
 		if errRedis != nil {
 			// Return status 500 and Redis connection error.

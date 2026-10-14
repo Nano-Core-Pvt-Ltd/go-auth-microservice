@@ -15,7 +15,7 @@ type Book struct {
 	Title      string    `bson:"title" json:"title" validate:"required,lte=255"`
 	Author     string    `bson:"author" json:"author" validate:"required,lte=255"`
 	BookStatus int       `bson:"book_status" json:"book_status" validate:"required,len=1"`
-	BookAttrs  BookAttrs `bson:"book_attrs" json:"book_attrs" validate:"required,dive"`
+	BookAttrs  BookAttrs `bson:"book_attrs" json:"book_attrs" validate:"required"`
 }
 
 // BookAttrs struct to describe book attributes.
