@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	grpcclient "github.com/create-go-app/fiber-go-template/app/grpc"
 	"github.com/create-go-app/fiber-go-template/app/models"
 	"github.com/create-go-app/fiber-go-template/pkg/utils"
 	"github.com/create-go-app/fiber-go-template/platform/cache"
@@ -93,6 +94,17 @@ func UserSignUp(c *fiber.Ctx) error {
 	if err := db.CreateUser(user); err != nil {
 		// Return status 500 and create user process error.
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	// Create an initial wallet in the Payment service (sajilowallet) for the
+	// newly registered user. The wallet balance is stored in the Payment
+	// service's own database.
+	if err := grpcclient.CreateWallet(context.Background(), user.ID.String(), "USD"); err != nil {
+		// Return status 502 if the Payment service is unreachable.
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
 			"error": true,
 			"msg":   err.Error(),
 		})

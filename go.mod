@@ -1,6 +1,6 @@
 module github.com/create-go-app/fiber-go-template
 
-go 1.26.0
+go 1.26.5
 
 require (
 	github.com/go-playground/validator/v10 v10.30.5
@@ -11,11 +11,15 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.23.0
+	github.com/go-wallet-microservice/go-wallet-microservice v0.0.0
 	github.com/stretchr/testify v1.12.1
 	github.com/swaggo/swag v1.16.6
 	go.mongodb.org/mongo-driver/v2 v2.9.2
 	golang.org/x/crypto v0.58.0
+	google.golang.org/grpc v1.84.0
 )
+
+replace github.com/go-wallet-microservice/go-wallet-microservice => ../go-wallet-microservice
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -51,8 +55,11 @@ require (
 	go.uber.org/atomic v1.12.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/mod v0.42.0 // indirect
+	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260706201446-f0a921348800 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 )
