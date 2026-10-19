@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "github.com/create-go-app/fiber-go-template/proto/auth;authpb";
+
+service AuthService {
+  rpc GetMyProfile(GetMyProfileRequest) returns (GetMyProfileResponse);
+}
+
+message GetMyProfileRequest {
+  string user_id = 1;
+}
+
+message GetMyProfileResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}

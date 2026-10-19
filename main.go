@@ -1,8 +1,10 @@
 package main
 
 import (
+	"log"
 	"os"
 
+	grpcserver "github.com/create-go-app/fiber-go-template/app/grpcserver"
 	"github.com/create-go-app/fiber-go-template/pkg/configs"
 	"github.com/create-go-app/fiber-go-template/pkg/middleware"
 	"github.com/create-go-app/fiber-go-template/pkg/routes"
@@ -28,6 +30,17 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	authGRPCAddr := os.Getenv("AUTH_GRPC_ADDR")
+	if authGRPCAddr == "" {
+		authGRPCAddr = "0.0.0.0:3002"
+	}
+
+	go func() {
+		if err := grpcserver.StartGRPCServer(authGRPCAddr); err != nil {
+			log.Fatalf("auth gRPC server error: %v", err)
+		}
+	}()
+
 	// Define Fiber config.
 	config := configs.FiberConfig()
 
